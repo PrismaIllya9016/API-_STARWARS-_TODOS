@@ -157,7 +157,15 @@ def get_planet_by_id(planet_id):
 
 #Función get para llamar a todos los vehículos de la base de datos
 @app.route('/vehicles', methods=['GET'])
+@jwt_required()
 def get_vehicles():
+    user = User.query.get(get_jwt_identity())
+    if user is None:
+        raise APIException("usuario no existe", status_code=401)
+    jti=get_jwt()["jti"]
+    tokenBlocked = TokenBlockedList.query.filter_by(token=jti).first()
+    if isinstance(tokenBlocked, TokenBlockedList):
+        return jsonify(msg="Acceso Denegado")
     vehicles = Vehicles.query.all()
     vehicles = list(map( lambda vehicle: vehicle.serialize(), vehicles))  
     return jsonify(vehicles), 200
